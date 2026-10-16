@@ -1497,6 +1497,27 @@
                 <label><i class="fas fa-coins"></i> Valor da Aposta (R$)</label>
                 <input type="number" id="valorAposta" value="10" min="1" step="1" />
             </div>
+            <!-- APOSTA PERSONALIZADA MANUAL -->
+            <div class="stake-control" style="background: var(--bg-input); padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid var(--border-color);">
+                <h4 style="font-size: 13px; color: var(--text-primary); margin-bottom: 8px;"><i class="fas fa-edit"></i> Aposta Personalizada</h4>
+                <input type="text" id="customName" placeholder="Jogo (Ex: Brasil x Argentina)" style="margin-bottom: 8px;" />
+    
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <input type="number" id="customOdd1" placeholder="Odd 1" step="0.01" style="width: 33%;" title="Odd Casa (1)" />
+                    <input type="number" id="customOddX" placeholder="Odd X" step="0.01" style="width: 33%;" title="Odd Empate (X)" />
+                    <input type="number" id="customOdd2" placeholder="Odd 2" step="0.01" style="width: 33%;" title="Odd Visitante (2)" />
+                </div>
+
+                <select id="customChoice" style="width: 100%; padding: 8px 12px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 8px; color: var(--text-primary);">
+                    <option value="casa">Apostar na Casa (1)</option>
+                    <option value="empate">Apostar no Empate (X)</option>
+                    <option value="visitante">Apostar no Visitante (2)</option>
+                </select>
+
+                <button class="btn-secondary" style="width: 100%;" onclick="addManualBet()">Adicionar Manualmente</button>
+            </div>
+
+
 
             <div class="empty-cupom" id="emptyCupom">
                 <i class="fas fa-receipt"></i>
@@ -2488,9 +2509,75 @@
             isSimulating = false;
         }
 
+        function addManualBet(nomeOpt, odd1Opt, oddXOpt, odd2Opt, choiceOpt) {
+            const nome = nomeOpt || document.getElementById('customName').value || 'Aposta Customizada';
+            const oddCasa = parseFloat(odd1Opt || document.getElementById('customOdd1').value);
+            const oddEmpate = parseFloat(oddXOpt || document.getElementById('customOddX').value);
+            const oddVisitante = parseFloat(odd2Opt || document.getElementById('customOdd2').value);
+            const escolha = choiceOpt || document.getElementById('customChoice').value;
+
+            if (!oddCasa || !oddEmpate || !oddVisitante || oddCasa <= 1 || oddEmpate <= 1 || oddVisitante <= 1) {
+                alert('As três odds devem ser fornecidas e ser estritamente maiores que 1.0');
+                return;
+            }
+
+            let oddEscolhida;
+            let choiceText;
+    
+            if (escolha === 'casa') {
+                oddEscolhida = oddCasa;
+                choiceText = '1';
+            } else if (escolha === 'empate') {
+            oddEscolhida = oddEmpate;
+            choiceText = 'X';
+            } else {
+            oddEscolhida = oddVisitante;
+            choiceText = '2';
+            }
+
+            const gameId = 'custom_' + Date.now();
+            const selectionName = `${nome} (${choiceText})`;
+
+            // Acopla a aposta ao cupom garantindo que a margem real seja extraída
+            addBet(selectionName, oddEscolhida, gameId, oddCasa, oddEmpate, oddVisitante, escolha);
+
+            // Limpa a interface apenas se a ação partiu do clique manual do usuário
+            if (!nomeOpt) {
+                document.getElementById('customName').value = '';
+                document.getElementById('customOdd1').value = '';
+                document.getElementById('customOddX').value = '';
+                document.getElementById('customOdd2').value = '';
+            }
+        }
+
+        function checkURLParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const odd1 = urlParams.get('odd1');
+            const oddX = urlParams.get('oddx');
+            const odd2 = urlParams.get('odd2');
+            const escolha = urlParams.get('escolha'); // Valores aceitos: 'casa', 'empate', 'visitante'
+            const stake = urlParams.get('stake');
+            const nome = urlParams.get('nome') || 'Aposta do Chat';
+
+            // Se todos os parâmetros obrigatórios existirem na URL, a simulação roda automaticamente
+            if (odd1 && oddX && odd2 && escolha) {
+                if (stake) {
+                    document.getElementById('valorAposta').value = stake;
+            }
+
+            addManualBet(nome, odd1, oddX, odd2, escolha);
+
+            setTimeout(() => {
+                openSimulation();
+                }, 600);
+            }
+        }
+
+
         // ========== INICIALIZAR ==========
         loadTheme();
         buscarJogos();
+        checkURLParameters();
         updateUI();
 
         document.getElementById('valorAposta').addEventListener('change', function() {
