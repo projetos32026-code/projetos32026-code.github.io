@@ -2509,12 +2509,12 @@
             isSimulating = false;
         }
 
-        function addManualBet(nomeOpt, odd1Opt, oddXOpt, odd2Opt, choiceOpt) {
-            const nome = nomeOpt || document.getElementById('customName').value || 'Aposta Customizada';
-            const oddCasa = parseFloat(odd1Opt || document.getElementById('customOdd1').value);
-            const oddEmpate = parseFloat(oddXOpt || document.getElementById('customOddX').value);
-            const oddVisitante = parseFloat(odd2Opt || document.getElementById('customOdd2').value);
-            const escolha = choiceOpt || document.getElementById('customChoice').value;
+                function addManualBet(nomeOpt, odd1Opt, oddXOpt, odd2Opt, choiceOpt) {
+            const nome = (nomeOpt || document.getElementById('customName').value || 'Aposta Customizada').replace(/\+/g, ' ');
+            const oddCasa = parseFloat(String(odd1Opt || document.getElementById('customOdd1').value).replace(',', '.'));
+            const oddEmpate = parseFloat(String(oddXOpt || document.getElementById('customOddX').value).replace(',', '.'));
+            const oddVisitante = parseFloat(String(odd2Opt || document.getElementById('customOdd2').value).replace(',', '.'));
+            const escolha = (choiceOpt || document.getElementById('customChoice').value || 'casa').toLowerCase().trim();
 
             if (!oddCasa || !oddEmpate || !oddVisitante || oddCasa <= 1 || oddEmpate <= 1 || oddVisitante <= 1) {
                 alert('As três odds devem ser fornecidas e ser estritamente maiores que 1.0');
@@ -2528,18 +2528,18 @@
                 oddEscolhida = oddCasa;
                 choiceText = '1';
             } else if (escolha === 'empate') {
-            oddEscolhida = oddEmpate;
-            choiceText = 'X';
+                oddEscolhida = oddEmpate;
+                choiceText = 'X';
             } else {
-            oddEscolhida = oddVisitante;
-            choiceText = '2';
+                oddEscolhida = oddVisitante;
+                choiceText = '2';
             }
 
             const gameId = 'custom_' + Date.now();
             const selectionName = `${nome} (${choiceText})`;
 
-            // Acopla a aposta ao cupom garantindo que a margem real seja extraída
-            addBet(selectionName, oddEscolhida, gameId, oddCasa, oddEmpate, oddVisitante, escolha);
+            // Passa o objeto de odds no 4º parâmetro conforme exigido pela nova assinatura de addBet
+            addBet(selectionName, oddEscolhida, gameId, { casa: oddCasa, empate: oddEmpate, visitante: oddVisitante }, escolha);
 
             // Limpa a interface apenas se a ação partiu do clique manual do usuário
             if (!nomeOpt) {
@@ -2549,6 +2549,7 @@
                 document.getElementById('customOdd2').value = '';
             }
         }
+
 
         function checkURLParameters() {
             const urlParams = new URLSearchParams(window.location.search);
